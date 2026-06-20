@@ -9,13 +9,14 @@ import Logo from "./Logo";
 import Btn from "./Btn";
 
 const NAV_LINKS = [
-  { href: "/", label: "Library", icon: "grid", matchPaths: ["/", "/game"] },
+  { href: "/", label: "Home", icon: "home", matchPaths: ["/"] },
+  { href: "/library", label: "Library", icon: "grid", matchPaths: ["/library", "/game"] },
   { href: "/hall-of-fame", label: "Hall of Fame", icon: "trophy", matchPaths: ["/hall-of-fame"] },
 ];
 
 function isLinkActive(pathname: string, matchPaths: string[]): boolean {
   return matchPaths.some((p) =>
-    p === "/" ? pathname === "/" : pathname.startsWith(p)
+    p === "/" ? pathname === "/" : pathname === p || pathname.startsWith(p + "/")
   );
 }
 
@@ -27,7 +28,7 @@ export default function Navbar() {
 
   function handleSignOut() {
     signOut();
-    router.push("/");
+    router.push("/library");
   }
 
   const themeBtn = (
