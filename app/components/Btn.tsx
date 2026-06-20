@@ -86,10 +86,10 @@ export default function Btn({
       ? variant === "solid"
         ? { boxShadow: "0 8px 24px -8px var(--accent-glow)", filter: "brightness(1.04)" }
         : variant === "line"
-        ? { background: "var(--accent)", color: "var(--accent-ink)", borderColor: "var(--accent)" }
+        ? { background: "var(--accent)", color: "var(--accent-ink)", border: "1px solid var(--accent)" }
         : variant === "ghost"
-        ? { color: "var(--text)", borderColor: "var(--text-faint)" }
-        : { borderColor: "var(--accent-line)" }
+        ? { color: "var(--text)", border: "1px solid var(--text-faint)" }
+        : { border: "1px solid var(--accent-line)" }
       : {};
 
   return (
