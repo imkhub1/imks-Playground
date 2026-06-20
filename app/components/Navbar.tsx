@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/", label: "Home", icon: "home", matchPaths: ["/"] },
   { href: "/library", label: "Library", icon: "grid", matchPaths: ["/library", "/game"] },
   { href: "/hall-of-fame", label: "Hall of Fame", icon: "trophy", matchPaths: ["/hall-of-fame"] },
+  { href: "/about", label: "About", icon: "info", matchPaths: ["/about"] },
 ];
 
 function isLinkActive(pathname: string, matchPaths: string[]): boolean {
