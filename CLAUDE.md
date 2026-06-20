@@ -16,16 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Tailwind CSS v4** (CSS-based config, no `tailwind.config.js`)
 - **ESLint 9** (flat config via `eslint-config-next`)
 
-## Commands
+## Skills
 
-```bash
-npm run dev     # start dev server
-npm run build   # production build
-npm run start   # serve the production build
-npm run lint    # eslint (flat config, eslint.config.mjs)
-```
-
-There is no test runner configured yet.
+/frontend-design for UI/UX design and implementation guidance; 
+/spec and /spec-impl for spec-driven development (see below); 
+/code-review for code review; 
+/debug for debugging help.
 
 ## Critical: this is a non-standard Next.js (v16.2.9)
 
