@@ -212,7 +212,7 @@ function GameOverModal({
             PLAY AGAIN
           </Btn>
           <Btn variant="ghost" full onClick={onExit}>
-            BACK TO PLAYGROUND
+            BACK TO LIBRARY
           </Btn>
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function PlayerView({ game }: { game: Game }) {
             variant="surface"
             size="sm"
             leftIcon="exit"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/library")}
           >
             EXIT
           </Btn>
@@ -403,7 +403,7 @@ export default function PlayerView({ game }: { game: Game }) {
           score={score}
           onSubmit={submitScore}
           onReplay={startRun}
-          onExit={() => router.push("/")}
+          onExit={() => router.push("/library")}
         />
       )}
     </div>

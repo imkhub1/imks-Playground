@@ -248,9 +248,47 @@ a {
   }
 }
 
+/* scroll-reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* floating silhouettes */
+@keyframes siloFloat {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50%       { transform: translateY(-18px) rotate(var(--r, 0deg)); }
+}
+.home-silos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.silo {
+  position: absolute;
+  opacity: 0.13;
+  animation: siloFloat var(--dur, 5s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+.silo.s1  { width: 96px;  top:  8%; left:  6%; --dur: 5.2s; --delay: 0s;   --r: -8deg; }
+.silo.s2  { width: 80px;  top: 18%; right: 8%; --dur: 6.1s; --delay: 0.4s; --r:  6deg; }
+.silo.s3  { width: 88px;  top: 55%; left:  3%; --dur: 4.8s; --delay: 0.8s; --r: -5deg; }
+.silo.s4  { width: 60px;  top: 70%; right: 5%; --dur: 5.6s; --delay: 1.2s; --r: 12deg; }
+.silo.s5  { width: 90px;  top: 35%; left: 46%; --dur: 7.0s; --delay: 0.2s; --r:  3deg; }
+.silo.s6  { width: 52px;  top: 80%; left: 22%; --dur: 4.5s; --delay: 0.6s; --r: -10deg;}
+.silo.s7  { width: 64px;  top: 12%; left: 38%; --dur: 6.4s; --delay: 1.0s; --r:  7deg; }
+.silo.s8  { width: 56px;  top: 65%; right:22%; --dur: 5.0s; --delay: 0.3s; --r: -4deg; }
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
     transition: none !important;
   }
+  .reveal { opacity: 1; transform: none; }
 }

@@ -107,7 +107,7 @@ export default function AuthView() {
 
   const handleLogin = (name: string) => {
     signIn(name.trim().slice(0, 14) || "PLAYER");
-    router.push("/");
+    router.push("/library");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -258,7 +258,7 @@ export default function AuthView() {
             variant="line"
             full
             leftIcon="user"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/library")}
           >
             PLAY AS GUEST
           </Btn>

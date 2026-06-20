@@ -21,7 +21,7 @@ export default function DetailView({ game }: { game: Game }) {
       style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 80px" }}
     >
       <Link
-        href="/"
+        href="/library"
         className="mono"
         style={{
           display: "inline-flex",
@@ -36,7 +36,7 @@ export default function DetailView({ game }: { game: Game }) {
         }}
       >
         <Ico name="chevL" size={15} />
-        BACK TO PLAYGROUND
+        BACK TO LIBRARY
       </Link>
 
       <div
@@ -104,8 +104,8 @@ export default function DetailView({ game }: { game: Game }) {
               >
                 PLAY NOW
               </Btn>
-              <Btn variant="ghost" size="lg" onClick={() => router.push("/")}>
-                BACK TO PLAYGROUND
+              <Btn variant="ghost" size="lg" onClick={() => router.push("/library")}>
+                BACK TO LIBRARY
               </Btn>
             </div>
 
