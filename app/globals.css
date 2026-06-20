@@ -285,6 +285,145 @@ a {
 .silo.s7  { width: 64px;  top: 12%; left: 38%; --dur: 6.4s; --delay: 1.0s; --r:  7deg; }
 .silo.s8  { width: 56px;  top: 65%; right:22%; --dur: 5.0s; --delay: 0.3s; --r: -4deg; }
 
+/* ===== ABOUT PAGE ===== */
+.about { position: relative; }
+
+.highlight-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 52px;
+}
+@media (max-width: 820px) { .highlight-row { grid-template-columns: 1fr; } }
+
+.highlight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  text-align: left;
+  transition: transform 220ms, border-color 220ms, box-shadow 220ms;
+}
+.highlight:hover {
+  transform: translateY(-3px);
+  border-color: currentColor;
+  box-shadow: 0 12px 28px -14px currentColor;
+}
+.highlight .hl-icon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  filter: drop-shadow(0 0 6px currentColor);
+  image-rendering: pixelated;
+}
+
+.div-pixels { display: flex; gap: 4px; }
+.div-pixels span {
+  width: 6px;
+  height: 6px;
+  background: #00f5ff;
+  box-shadow: 0 0 6px #00f5ff;
+  animation: pxblink 2.4s steps(2) infinite;
+}
+.div-pixels span:nth-child(3n) { background: #ff006e; box-shadow: 0 0 6px #ff006e; }
+.div-pixels span:nth-child(5n) { background: #f5ff00; box-shadow: 0 0 6px #f5ff00; }
+@keyframes pxblink { 50% { opacity: 0.2; } }
+
+@media (max-width: 900px) { .contact-grid { grid-template-columns: 1fr !important; gap: 24px !important; } }
+
+.contact-form {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 28px;
+  position: relative;
+  transition: transform 80ms;
+}
+.contact-form::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed rgba(0, 245, 255, 0.12);
+  border-radius: calc(var(--radius-card) - 4px);
+  pointer-events: none;
+}
+.contact-form.shake { animation: cfShake 0.4s; }
+@keyframes cfShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+.contact-form textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-btn);
+  padding: 12px;
+  outline: 0;
+  font-family: var(--font-mono);
+  color: var(--text);
+  resize: vertical;
+  min-height: 110px;
+  transition: border-color 140ms, box-shadow 140ms;
+  width: 100%;
+}
+.contact-form textarea:focus {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.contact-form textarea::placeholder { color: var(--text-faint); }
+
+.terminal-box {
+  background: #050507;
+  border-radius: var(--radius-card);
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+.terminal-box.success { border: 1px solid #00ff88; box-shadow: 0 0 22px rgba(0, 255, 136, 0.18); }
+.terminal-box.error   { border: 1px solid #ff006e; box-shadow: 0 0 22px rgba(255, 0, 110, 0.18); }
+
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #0a0a12;
+  border-bottom: 1px solid var(--border);
+}
+.term-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+.term-bar .dot.r { background: #ff5f56; }
+.term-bar .dot.y { background: #ffbd2e; }
+.term-bar .dot.g { background: #27c93f; }
+.term-bar .term-title {
+  margin-left: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-faint);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.term-body { padding: 18px 18px 22px; font-size: 13px; line-height: 1.8; }
+.term-body .t-line { color: #00ff88; }
+.term-body .t-prompt { color: #00f5ff; margin-right: 8px; }
+.term-body .t-dim { color: var(--text-muted); }
+.term-body .t-success {
+  margin-top: 12px;
+  color: #00ff88;
+  text-shadow: 0 0 6px rgba(0, 255, 136, 0.45);
+  font-weight: 700;
+}
+.term-body .t-err {
+  margin-top: 12px;
+  color: #ff006e;
+  text-shadow: 0 0 6px rgba(255, 0, 110, 0.45);
+  font-weight: 700;
+}
+.term-body .t-caret { animation: blink 1s steps(1) infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
