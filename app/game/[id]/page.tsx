@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { GAMES } from "@/app/lib/games";
+import { getGame } from "@/app/lib/gamesSupabase";
 import DetailView from "./DetailView";
 
 export default async function DetailPage({
@@ -8,7 +8,7 @@ export default async function DetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGame(id);
   if (!game) notFound();
   return <DetailView game={game} />;
 }

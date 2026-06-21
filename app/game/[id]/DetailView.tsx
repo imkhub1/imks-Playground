@@ -20,16 +20,14 @@ export default function DetailView({ game }: { game: Game }) {
   const isRealGame = !!GAME_FACTORIES[game.id];
   const seededLb = isRealGame
     ? []
-    : getLeaderboard(game.id, userScores).slice(0, 10);
+    : getLeaderboard(game, userScores).slice(0, 10);
 
   const [lb, setLb] = useState<ScoreRow[]>(seededLb);
 
-   
   useEffect(() => {
     if (!isRealGame) return;
     fetchLeaderboard(game.id, 10).then(setLb).catch(console.error);
   }, [game.id, isRealGame]);
-   
 
   return (
     <div
