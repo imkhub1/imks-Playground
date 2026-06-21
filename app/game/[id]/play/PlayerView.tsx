@@ -7,12 +7,21 @@ import { fmt } from "@/app/lib/scores";
 import { useAppState } from "@/app/components/AppStateProvider";
 import GameGlyph from "@/app/components/GameGlyph";
 import Btn from "@/app/components/Btn";
+import { useCanvasGame } from "@/app/games/engine/useCanvasGame";
+import type { GameState } from "@/app/games/engine/types";
+import { GAME_FACTORIES } from "@/app/games/registry";
+import { saveScore } from "@/app/lib/supabaseScores";
+
+// ── Shared helpers ─────────────────────────────────────────────────────────────
 
 function useTypewriter(text: string, active: boolean, speed = 55) {
   const [out, setOut] = useState("");
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!active) { setOut(""); return; }
+    if (!active) {
+      setOut("");
+      return;
+    }
     let i = 0;
     setOut("");
     const t = setInterval(() => {
@@ -30,12 +39,14 @@ function GameOverModal({
   game,
   score,
   onSubmit,
+  onSave,
   onReplay,
   onExit,
 }: {
   game: Game;
   score: number;
   onSubmit: (gameId: string, score: number, player: string) => void;
+  onSave?: (gameId: string, player: string, score: number) => Promise<void>;
   onReplay: () => void;
   onExit: () => void;
 }) {
@@ -45,7 +56,6 @@ function GameOverModal({
   const [shown, setShown] = useState(0);
   const typed = useTypewriter("SCORE SAVED", saved, 60);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const dur = 700;
     const steps = 26;
@@ -57,12 +67,12 @@ function GameOverModal({
     }, dur / steps);
     return () => clearInterval(t);
   }, [score]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const save = () => {
     const player =
       (name || "GUEST").trim().slice(0, 14).toUpperCase() || "GUEST";
     onSubmit(game.id, score, player);
+    onSave?.(game.id, player, score).catch(console.error);
     setSaved(true);
   };
 
@@ -220,7 +230,208 @@ function GameOverModal({
   );
 }
 
-export default function PlayerView({ game }: { game: Game }) {
+// ── HUD bar (shared between real and mock players) ────────────────────────────
+
+function HudBar({
+  items,
+  paused,
+  onPause,
+  onExit,
+}: {
+  items: [string, string][];
+  paused: boolean;
+  onPause: () => void;
+  onExit: () => void;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+        marginBottom: 16,
+        flexWrap: "wrap",
+      }}
+    >
+      <div style={{ display: "flex", gap: 26, flexWrap: "wrap" }}>
+        {items.map(([k, v]) => (
+          <div
+            key={k}
+            style={{ display: "flex", flexDirection: "column", gap: 3 }}
+          >
+            <span
+              className="mono"
+              style={{
+                fontSize: 9.5,
+                fontWeight: 600,
+                letterSpacing: "0.14em",
+                color: "var(--text-faint)",
+              }}
+            >
+              {k}
+            </span>
+            <span
+              className="mono"
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: "var(--accent)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {v}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Btn
+          variant="surface"
+          size="sm"
+          leftIcon={paused ? "play" : "pause"}
+          onClick={onPause}
+        >
+          {paused ? "RESUME" : "PAUSE"}
+        </Btn>
+        <Btn variant="surface" size="sm" leftIcon="exit" onClick={onExit}>
+          EXIT
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ── Real canvas game player ────────────────────────────────────────────────────
+
+function CanvasGamePlayer({ game }: { game: Game }) {
+  const router = useRouter();
+  const { user, submitScore } = useAppState();
+
+  const [gameState, setGameState] = useState<GameState>({
+    score: 0,
+    lives: 3,
+    level: 1,
+    status: "playing",
+  });
+  const [paused, setPaused] = useState(false);
+  const [over, setOver] = useState(false);
+  const [finalScore, setFinalScore] = useState(0);
+
+  const handleGameOver = useCallback((score: number) => {
+    setFinalScore(score);
+    setOver(true);
+  }, []);
+
+  const factory = GAME_FACTORIES[game.id]!;
+  const { canvasRef, pause, resume, restart } = useCanvasGame({
+    factory,
+    onState: setGameState,
+    onGameOver: handleGameOver,
+  });
+
+  const togglePause = () => {
+    if (paused) {
+      resume();
+      setPaused(false);
+    } else {
+      pause();
+      setPaused(true);
+    }
+  };
+
+  const handleReplay = useCallback(() => {
+    setOver(false);
+    setFinalScore(0);
+    setPaused(false);
+    setGameState({ score: 0, lives: 3, level: 1, status: "playing" });
+    restart();
+  }, [restart]);
+
+  const playerName = user ? user.name : "GUEST";
+
+  const hudItems: [string, string][] = [
+    ["SCORE", fmt(gameState.score)],
+    ["LIVES", "★".repeat(Math.max(0, gameState.lives)) || "—"],
+    ["LEVEL", String(gameState.level).padStart(2, "0")],
+    ["PLAYER", playerName],
+  ];
+
+  return (
+    <div
+      className="view-enter"
+      style={{ maxWidth: 980, margin: "0 auto", padding: "28px 24px 60px" }}
+    >
+      <HudBar
+        items={hudItems}
+        paused={paused}
+        onPause={togglePause}
+        onExit={() => router.push("/library")}
+      />
+
+      {/* Bezel */}
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 16,
+          border: "2px solid var(--border-2)",
+          background: "#000",
+          boxShadow: "0 30px 70px -30px rgba(0,0,0,0.9)",
+          overflow: "hidden",
+          aspectRatio: "16 / 9",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={600}
+          style={{ maxWidth: "100%", maxHeight: "100%", display: "block" }}
+        />
+        {paused && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.55)",
+            }}
+          >
+            <span
+              className="mono"
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.22em",
+                color: "var(--text-faint)",
+              }}
+            >
+              — PAUSED —
+            </span>
+          </div>
+        )}
+      </div>
+
+      {over && (
+        <GameOverModal
+          game={game}
+          score={finalScore}
+          onSubmit={submitScore}
+          onSave={saveScore}
+          onReplay={handleReplay}
+          onExit={() => router.push("/library")}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Mock player (unchanged behaviour for unimplemented games) ─────────────────
+
+function MockGamePlayer({ game }: { game: Game }) {
   const router = useRouter();
   const { user, submitScore } = useAppState();
   const [score, setScore] = useState(0);
@@ -236,7 +447,6 @@ export default function PlayerView({ game }: { game: Game }) {
     setOver(false);
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (over || paused) return;
     const id = setInterval(() => {
@@ -244,9 +454,6 @@ export default function PlayerView({ game }: { game: Game }) {
     }, 240);
     return () => clearInterval(id);
   }, [over, paused]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const handleEndRun = () => setOver(true);
 
   const playerName = user ? user.name : "GUEST";
 
@@ -262,67 +469,12 @@ export default function PlayerView({ game }: { game: Game }) {
       className="view-enter"
       style={{ maxWidth: 980, margin: "0 auto", padding: "28px 24px 60px" }}
     >
-      {/* HUD */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-          marginBottom: 16,
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", gap: 26, flexWrap: "wrap" }}>
-          {hudItems.map(([k, v]) => (
-            <div
-              key={k}
-              style={{ display: "flex", flexDirection: "column", gap: 3 }}
-            >
-              <span
-                className="mono"
-                style={{
-                  fontSize: 9.5,
-                  fontWeight: 600,
-                  letterSpacing: "0.14em",
-                  color: "var(--text-faint)",
-                }}
-              >
-                {k}
-              </span>
-              <span
-                className="mono"
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "var(--accent)",
-                  fontVariantNumeric: "tabular-nums",
-                }}
-              >
-                {v}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Btn
-            variant="surface"
-            size="sm"
-            leftIcon={paused ? "play" : "pause"}
-            onClick={() => setPaused((p) => !p)}
-          >
-            {paused ? "RESUME" : "PAUSE"}
-          </Btn>
-          <Btn
-            variant="surface"
-            size="sm"
-            leftIcon="exit"
-            onClick={() => router.push("/library")}
-          >
-            EXIT
-          </Btn>
-        </div>
-      </div>
+      <HudBar
+        items={hudItems}
+        paused={paused}
+        onPause={() => setPaused((p) => !p)}
+        onExit={() => router.push("/library")}
+      />
 
       {/* bezel */}
       <div
@@ -376,7 +528,7 @@ export default function PlayerView({ game }: { game: Game }) {
             {paused ? "— PAUSED —" : "DEMO BUILD · LIVE GAMEPLAY NOT INCLUDED"}
           </span>
           {!over && (
-            <Btn variant="line" size="sm" onClick={handleEndRun}>
+            <Btn variant="line" size="sm" onClick={() => setOver(true)}>
               END RUN
             </Btn>
           )}
@@ -408,4 +560,13 @@ export default function PlayerView({ game }: { game: Game }) {
       )}
     </div>
   );
+}
+
+// ── Router: real game if registered, mock otherwise ───────────────────────────
+
+export default function PlayerView({ game }: { game: Game }) {
+  if (GAME_FACTORIES[game.id]) {
+    return <CanvasGamePlayer game={game} />;
+  }
+  return <MockGamePlayer game={game} />;
 }

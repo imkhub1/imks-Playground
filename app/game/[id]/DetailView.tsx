@@ -2,18 +2,34 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import type { Game } from "@/app/lib/games";
-import { getLeaderboard } from "@/app/lib/scores";
+import { getLeaderboard, type ScoreRow } from "@/app/lib/scores";
 import { useAppState } from "@/app/components/AppStateProvider";
 import GameCover from "@/app/components/GameCover";
 import ScoreTable from "@/app/components/ScoreTable";
 import Btn from "@/app/components/Btn";
 import Ico from "@/app/components/Ico";
+import { fetchLeaderboard } from "@/app/lib/supabaseScores";
+import { GAME_FACTORIES } from "@/app/games/registry";
 
 export default function DetailView({ game }: { game: Game }) {
   const router = useRouter();
   const { userScores } = useAppState();
-  const lb = getLeaderboard(game.id, userScores).slice(0, 10);
+
+  const isRealGame = !!GAME_FACTORIES[game.id];
+  const seededLb = isRealGame
+    ? []
+    : getLeaderboard(game.id, userScores).slice(0, 10);
+
+  const [lb, setLb] = useState<ScoreRow[]>(seededLb);
+
+   
+  useEffect(() => {
+    if (!isRealGame) return;
+    fetchLeaderboard(game.id, 10).then(setLb).catch(console.error);
+  }, [game.id, isRealGame]);
+   
 
   return (
     <div
@@ -104,7 +120,11 @@ export default function DetailView({ game }: { game: Game }) {
               >
                 PLAY NOW
               </Btn>
-              <Btn variant="ghost" size="lg" onClick={() => router.push("/library")}>
+              <Btn
+                variant="ghost"
+                size="lg"
+                onClick={() => router.push("/library")}
+              >
                 BACK TO LIBRARY
               </Btn>
             </div>

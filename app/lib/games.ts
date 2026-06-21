@@ -82,8 +82,8 @@ export const GAMES: Game[] = [
     seed: 54190,
   },
   {
-    id: "rocks",
-    title: "ROCKS",
+    id: "asteroids",
+    title: "ASTEROIDS",
     category: "SHOOTER",
     icon: "rocks",
     blurb: "Pulverize asteroids in zero gravity.",
