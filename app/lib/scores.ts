@@ -1,4 +1,4 @@
-import { type Game, GAMES } from "./games";
+import { type Game } from "./games";
 
 export interface ScoreRow {
   player: string;
@@ -11,9 +11,26 @@ export interface ScoreRow {
 export type UserScores = Record<string, ScoreRow[]>;
 
 const HANDLES = [
-  "NOVA_X", "byteWraith", "QUASAR", "kilo.ton", "ECHO_77", "vex", "ASTRA",
-  "n0ctis", "PIXEL_GHOST", "ORB1T", "static.k", "ZENITH", "drift", "HALON",
-  "m4 verick", "lumen", "RAZOR", "cobalt", "FLUX", "tenebr",
+  "NOVA_X",
+  "byteWraith",
+  "QUASAR",
+  "kilo.ton",
+  "ECHO_77",
+  "vex",
+  "ASTRA",
+  "n0ctis",
+  "PIXEL_GHOST",
+  "ORB1T",
+  "static.k",
+  "ZENITH",
+  "drift",
+  "HALON",
+  "m4 verick",
+  "lumen",
+  "RAZOR",
+  "cobalt",
+  "FLUX",
+  "tenebr",
 ];
 
 function seededRand(seed: number) {
@@ -46,21 +63,15 @@ export function buildSeedScores(game: Game): ScoreRow[] {
   return rows;
 }
 
-const SEED_SCORES: Record<string, ScoreRow[]> = {};
-GAMES.forEach((g) => (SEED_SCORES[g.id] = buildSeedScores(g)));
-
-export function getLeaderboard(
-  gameId: string,
-  userScores: UserScores
-): ScoreRow[] {
-  const submitted = userScores[gameId] ?? [];
-  const all = [...SEED_SCORES[gameId], ...submitted];
+export function getLeaderboard(game: Game, userScores: UserScores): ScoreRow[] {
+  const submitted = userScores[game.id] ?? [];
+  const all = [...buildSeedScores(game), ...submitted];
   all.sort((a, b) => b.score - a.score);
   return all;
 }
 
-export function bestScore(gameId: string, userScores: UserScores): number {
-  const lb = getLeaderboard(gameId, userScores);
+export function bestScore(game: Game, userScores: UserScores): number {
+  const lb = getLeaderboard(game, userScores);
   return lb.length ? lb[0].score : 0;
 }
 
