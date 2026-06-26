@@ -10,6 +10,7 @@ import Btn from "@/app/components/Btn";
 import { useCanvasGame } from "@/app/games/engine/useCanvasGame";
 import type { GameState } from "@/app/games/engine/types";
 import { GAME_FACTORIES } from "@/app/games/registry";
+import { setTetrisStartLevel } from "@/app/games/tetris/game";
 import { saveScore } from "@/app/lib/supabaseScores";
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────
@@ -308,12 +309,16 @@ function CanvasGamePlayer({ game }: { game: Game }) {
   const router = useRouter();
   const { user, submitScore } = useAppState();
 
-  const [gameState, setGameState] = useState<GameState>({
-    score: 0,
-    lives: 3,
-    level: 1,
-    status: "playing",
-  });
+  const isTetris = game.id === "tetris";
+
+  // Tetris pre-game starting level (1-10). Applied on start()/PLAY AGAIN.
+  const [startLevel, setStartLevel] = useState(1);
+
+  const [gameState, setGameState] = useState<GameState>(
+    isTetris
+      ? { score: 0, lines: 0, level: 1, status: "playing" }
+      : { score: 0, lives: 3, level: 1, status: "playing" },
+  );
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
@@ -340,22 +345,42 @@ function CanvasGamePlayer({ game }: { game: Game }) {
     }
   };
 
+  const changeLevel = (delta: number) => {
+    setStartLevel((lvl) => {
+      const next = Math.min(10, Math.max(1, lvl + delta));
+      setTetrisStartLevel(next);
+      return next;
+    });
+  };
+
   const handleReplay = useCallback(() => {
     setOver(false);
     setFinalScore(0);
     setPaused(false);
-    setGameState({ score: 0, lives: 3, level: 1, status: "playing" });
+    if (isTetris) {
+      setTetrisStartLevel(startLevel);
+      setGameState({ score: 0, lines: 0, level: startLevel, status: "playing" });
+    } else {
+      setGameState({ score: 0, lives: 3, level: 1, status: "playing" });
+    }
     restart();
-  }, [restart]);
+  }, [restart, isTetris, startLevel]);
 
   const playerName = user ? user.name : "GUEST";
 
-  const hudItems: [string, string][] = [
-    ["SCORE", fmt(gameState.score)],
-    ["LIVES", "★".repeat(Math.max(0, gameState.lives)) || "—"],
-    ["LEVEL", String(gameState.level).padStart(2, "0")],
-    ["PLAYER", playerName],
-  ];
+  const hudItems: [string, string][] = isTetris
+    ? [
+        ["SCORE", fmt(gameState.score)],
+        ["LINES", String(gameState.lines ?? 0)],
+        ["LEVEL", String(gameState.level).padStart(2, "0")],
+        ["PLAYER", playerName],
+      ]
+    : [
+        ["SCORE", fmt(gameState.score)],
+        ["LIVES", "★".repeat(Math.max(0, gameState.lives ?? 0)) || "—"],
+        ["LEVEL", String(gameState.level).padStart(2, "0")],
+        ["PLAYER", playerName],
+      ];
 
   return (
     <div
@@ -368,6 +393,64 @@ function CanvasGamePlayer({ game }: { game: Game }) {
         onPause={togglePause}
         onExit={() => router.push("/library")}
       />
+
+      {isTetris && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 12,
+          }}
+        >
+          <span
+            className="mono"
+            style={{
+              fontSize: 9.5,
+              fontWeight: 600,
+              letterSpacing: "0.14em",
+              color: "var(--text-faint)",
+            }}
+          >
+            START LEVEL
+          </span>
+          <Btn
+            variant="surface"
+            size="sm"
+            onClick={() => changeLevel(-1)}
+            disabled={startLevel <= 1}
+          >
+            −
+          </Btn>
+          <span
+            className="mono"
+            style={{
+              minWidth: 28,
+              textAlign: "center",
+              fontSize: 16,
+              fontWeight: 700,
+              color: "var(--accent)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {String(startLevel).padStart(2, "0")}
+          </span>
+          <Btn
+            variant="surface"
+            size="sm"
+            onClick={() => changeLevel(1)}
+            disabled={startLevel >= 10}
+          >
+            +
+          </Btn>
+          <span
+            className="mono"
+            style={{ fontSize: 10, color: "var(--text-faint)" }}
+          >
+            applies on next game
+          </span>
+        </div>
+      )}
 
       {/* Bezel */}
       <div

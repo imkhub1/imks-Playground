@@ -2,9 +2,10 @@ export type GameStatus = "playing" | "dead" | "gameover";
 
 export interface GameState {
   score: number;
-  lives: number;
   level: number;
   status: GameStatus;
+  lives?: number; // asteroids
+  lines?: number; // tetris
 }
 
 export interface GameContext {
