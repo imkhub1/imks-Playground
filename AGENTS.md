@@ -6,7 +6,7 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Project
 
-**imk's Playground** — a platform to play games online and compete for the highest score. The repo is currently a near-default `create-next-app` scaffold (`app/page.tsx` is still the starter page); features are being built out from here.
+**imk's Playground** — a platform to play games online and compete for the highest score. The app has a working game engine (`app/games/engine/`) built around a `GameFactory`/`GameController` contract, two integrated games (`asteroids`, `tetris`), a Supabase-backed games catalog and score leaderboard, and the main pages (home, library, game detail/play, hall of fame, about, contact). Features continue to be built out from here.
 
 ## Stack
 
@@ -18,16 +18,22 @@ This file provides guidance to AI coding agents when working with code in this r
 
 ## Skills
 
-/frontend-design for UI/UX design and implementation guidance; 
-/spec and /spec-impl for spec-driven development (see below); 
-/code-review for code review; 
+/frontend-design for UI/UX design and implementation guidance;
+/spec and /spec-impl for spec-driven development (see below);
+/code-review for code review;
 /debug for debugging help.
+
+## Agents
+
+Custom agents live in `.opencode/agent/`. Restart opencode after adding or editing one.
+
+- **game-planner** (`primary`) — Plans and decides which new game fits the platform. Reasons about the technical "fit" contract (Canvas 2D 800×600, `GameFactory`/`GameController`, score-driven, keyboard controls, `ARCADE|PUZZLE|SHOOTER|VERSUS`) and proposes/prioritizes ideas. Keeps a running backlog at `.opencode/game-planner/backlog.md` so it never repeats past suggestions. Planning only — it does not write game code; hand off to `/spec` and `/spec-impl` to build. Invoke with Tab → `game-planner` (or `@game-planner`).
 
 ## Critical: this is a non-standard Next.js (v16.2.9)
 
 Per `AGENTS.md`, this Next.js has **breaking changes vs. what you may know**. APIs, conventions, and file structure may differ from training data. The authoritative docs are vendored in the package itself:
 
-- **Read `node_modules/next/dist/docs/` before writing any Next-specific code.** Structure: `01-app/` (App Router), `02-pages/`, `03-architecture/`. The `.mdx`/`.md` files contain embedded *AI agent hints* flagging the breaking changes — e.g. fixing slow client navigation requires exporting `unstable_instant` from the route (see `01-app/02-guides/instant-navigation.mdx`), not just Suspense.
+- **Read `node_modules/next/dist/docs/` before writing any Next-specific code.** Structure: `01-app/` (App Router), `02-pages/`, `03-architecture/`. The `.mdx`/`.md` files contain embedded _AI agent hints_ flagging the breaking changes — e.g. fixing slow client navigation requires exporting `unstable_instant` from the route (see `01-app/02-guides/instant-navigation.mdx`), not just Suspense.
 - Heed deprecation notices in those docs.
 
 ## Architecture & conventions
