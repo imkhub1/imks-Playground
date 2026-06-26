@@ -245,7 +245,7 @@ Checklist booleano (cada ítem es verificable a simple vista o con una acción c
 | # | Decisión | Elegido | Descartado | Justificación |
 |---|----------|---------|------------|---------------|
 | 1 | Enrutamiento | Rutas reales del App Router (`/`, `/game/[id]`, `/game/[id]/play`, `/auth`, `/hall-of-fame`) | Replicar el SPA por estado de `app.jsx` | Es Next.js idiomático: URLs compartibles, 404 nativo, aprovecha el framework. |
-| 2 | Estilos | Tailwind v4 con tokens en `@theme`/`globals.css` | Portar inline styles + CSS vars tal cual | Coherente con el stack del repo (CLAUDE.md) y más mantenible. Los CSS vars de tema se conservan como capa de theming. |
+| 2 | Estilos | Tailwind v4 con tokens en `@theme`/`globals.css` | Portar inline styles + CSS vars tal cual | Coherente con el stack del repo (AGENTS.md) y más mantenible. Los CSS vars de tema se conservan como capa de theming. |
 | 3 | Alcance de interacción | Toda la interacción de UI (filtros, tema, tabs, auth mock, player simulado, modal) | Maquetado estático sin estados | "Lo visual" incluye el comportamiento de UI; solo se excluye un motor de juego real. |
 | 4 | Panel de Tweaks | Fuera del MVP | Incluirlo | Es una herramienta de diseño en vivo, no una pantalla del producto. |
 | 5 | Persistencia | `localStorage` (tema, usuario, scores) | Solo estado en memoria | Trivial de implementar y hace la demo más creíble (scores que sobreviven recargas). |
