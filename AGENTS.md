@@ -28,6 +28,7 @@ This file provides guidance to AI coding agents when working with code in this r
 Custom agents live in `.opencode/agent/`. Restart opencode after adding or editing one.
 
 - **game-planner** (`primary`) — Plans and decides which new game fits the platform. Reasons about the technical "fit" contract (Canvas 2D 800×600, `GameFactory`/`GameController`, score-driven, keyboard controls, `ARCADE|PUZZLE|SHOOTER|VERSUS`) and proposes/prioritizes ideas. Keeps a running backlog at `.opencode/game-planner/backlog.md` so it never repeats past suggestions. Planning only — it does not write game code; hand off to `/spec` and `/spec-impl` to build. Invoke with Tab → `game-planner` (or `@game-planner`).
+- **game-jam** (`primary`) — Turns the planner's pick into a spec. Reads the game with status `Recommended` in `.opencode/game-planner/backlog.md` and writes one complete, implementation-ready spec (in English) at `specs/game-jam/<game-id>/<game-id>.md`, born as `Status: Proposed` and modeled on `specs/05`/`07` (Scope, Data Model, Implementation Plan, Acceptance Criteria, Decisions, Risks). Spec-writing only — it does not implement game code, and it only reads the backlog (status changes belong to `game-planner`); its edits are locked to `specs/game-jam/**`. Hand off to `/spec-impl` to build. Invoke with Tab → `game-jam` (or `@game-jam`).
 
 ## Critical: this is a non-standard Next.js (v16.2.9)
 
