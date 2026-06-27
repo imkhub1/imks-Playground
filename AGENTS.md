@@ -8,6 +8,10 @@ This file provides guidance to AI coding agents when working with code in this r
 
 **imk's Playground** — a platform to play games online and compete for the highest score. The app has a working game engine (`app/games/engine/`) built around a `GameFactory`/`GameController` contract, two integrated games (`asteroids`, `tetris`), a Supabase-backed games catalog and score leaderboard, and the main pages (home, library, game detail/play, hall of fame, about, contact). Features continue to be built out from here.
 
+## Language
+
+Communicate with the user (chat, explanations, questions) in **Spanish**. Keep everything written into the repository in **English** — code, comments, identifiers, file and directory names, documentation, specs, and commit messages.
+
 ## Stack
 
 - **Next.js 16.2.9** — App Router (note: non-standard build, see below)
@@ -29,6 +33,7 @@ Custom agents live in `.opencode/agent/`. Restart opencode after adding or editi
 
 - **game-planner** (`primary`) — Plans and decides which new game fits the platform. Reasons about the technical "fit" contract (Canvas 2D 800×600, `GameFactory`/`GameController`, score-driven, keyboard controls, `ARCADE|PUZZLE|SHOOTER|VERSUS`) and proposes/prioritizes ideas. Keeps a running backlog at `.opencode/game-planner/backlog.md` so it never repeats past suggestions. Planning only — it does not write game code; hand off to `/spec` and `/spec-impl` to build. Invoke with Tab → `game-planner` (or `@game-planner`).
 - **game-jam** (`primary`) — Turns the planner's pick into a spec. Reads the game with status `Recommended` in `.opencode/game-planner/backlog.md` and writes one complete, implementation-ready spec (in English) at `specs/game-jam/<game-id>/<game-id>.md`, born as `Status: Proposed` and modeled on `specs/05`/`07` (Scope, Data Model, Implementation Plan, Acceptance Criteria, Decisions, Risks). Spec-writing only — it does not implement game code, and it only reads the backlog (status changes belong to `game-planner`); its edits are locked to `specs/game-jam/**`. Hand off to `/spec-impl` to build. Invoke with Tab → `game-jam` (or `@game-jam`).
+- **skin-designer** (`primary`) — Owns the project's default **Pastel** game skin (`app/games/engine/skins.ts`) and applies/verifies it on a single, specified game. Given a game id, it refactors that game's `app/games/<game-id>/game.ts` to render exclusively through `ctx.skin` (no hardcoded colors), keeping the look cohesive with the app theme in `app/globals.css`. Works per selected/mentioned game — it does **not** audit all games. Its edits are locked to `app/games/engine/skins.ts` and `app/games/*/game.ts`. Invoke with Tab → `skin-designer` (or `@skin-designer`).
 
 ## Critical: this is a non-standard Next.js (v16.2.9)
 
