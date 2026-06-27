@@ -30,28 +30,16 @@ const BOARD_Y = (H - BOARD_H) / 2; // 0
 const COUNTDOWN_MS = 3000;
 const LINE_SCORES = [0, 100, 300, 500, 800];
 
-// Fixed dark skin (Pastel). No external CSS vars, no light theme.
-const BOARD_IS_LIGHT = false;
-
 // Neighbor bitmask (top/right/bottom/left) for merged-cell rendering.
 const NB_TOP = 1,
   NB_RIGHT = 2,
   NB_BOTTOM = 4,
   NB_LEFT = 8;
 
-// Pastel palette — index matches piece colorIdx (1-7).
-const PALETTE: (string | null)[] = [
-  null,
-  "#7dd9e8", // I
-  "#f3d97d", // O
-  "#c9a8e0", // T
-  "#85d99f", // S
-  "#f09bb5", // Z
-  "#748ae8", // J
-  "#f0ab6f", // L
-];
+// Piece colors come from the injected skin (`ctx.skin.entities`): a piece's
+// colorIdx (1-7) maps to `skin.entities[colorIdx - 1]`.
 
-// Piece definitions: square matrices, index matches palette (1-7).
+// Piece definitions: square matrices, index matches the entity palette (1-7).
 const PIECES: (number[][] | null)[] = [
   null,
   [
@@ -115,6 +103,15 @@ function shade(hex: string, amt: number): string {
     b *= k;
   }
   return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
+
+/** Re-emit a `#rrggbb` skin token as an rgba() string at the given alpha. */
+function withAlpha(hex: string, a: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
 }
 
 function roundRectPath(
@@ -193,6 +190,7 @@ export function setTetrisStartLevel(n: number): void {
 export function createTetris(gameCtx: GameContext): GameController {
   const canvas = gameCtx.canvas;
   const ctx = canvas.getContext("2d")!;
+  const { skin } = gameCtx;
   const sfx = createSfx();
 
   // ── State (closure-scoped) ─────────────────────────────────
@@ -232,7 +230,12 @@ export function createTetris(gameCtx: GameContext): GameController {
 
   function randomPiece(): Piece {
     const idx = Math.floor(Math.random() * 7) + 1; // 1-7
-    return { matrix: PIECES[idx]!.map((row) => [...row]), x: 0, y: 0, colorIdx: idx };
+    return {
+      matrix: PIECES[idx]!.map((row) => [...row]),
+      x: 0,
+      y: 0,
+      colorIdx: idx,
+    };
   }
 
   function calcDropInterval(lvl: number): number {
@@ -462,9 +465,9 @@ export function createTetris(gameCtx: GameContext): GameController {
     const radii = cornerRadii(neighbors, radius);
 
     const grad = c2d.createLinearGradient(0, ry, 0, ry + h);
-    grad.addColorStop(0, shade(color, BOARD_IS_LIGHT ? 0.18 : 0.12));
+    grad.addColorStop(0, shade(color, 0.12));
     grad.addColorStop(0.5, color);
-    grad.addColorStop(1, shade(color, BOARD_IS_LIGHT ? -0.1 : -0.16));
+    grad.addColorStop(1, shade(color, -0.16));
     roundRectPath(c2d, rx, ry, w, h, radii);
     c2d.fillStyle = grad;
     c2d.fill();
@@ -472,13 +475,13 @@ export function createTetris(gameCtx: GameContext): GameController {
     c2d.save();
     roundRectPath(c2d, rx, ry, w, h, radii);
     c2d.clip();
-    const hi = BOARD_IS_LIGHT ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.38)";
-    const lo = BOARD_IS_LIGHT ? "rgba(60,50,80,0.16)" : "rgba(0,0,0,0.26)";
+    const hi = withAlpha(skin.particle, 0.38);
+    const lo = withAlpha(skin.well, 0.26);
     bevelEdges(c2d, rx, ry, w, h, neighbors, hi, lo, 1.5);
     c2d.restore();
 
     roundRectPath(c2d, rx + 0.5, ry + 0.5, w - 1, h - 1, radii);
-    c2d.strokeStyle = BOARD_IS_LIGHT ? "rgba(40,30,60,0.18)" : "rgba(255,255,255,0.16)";
+    c2d.strokeStyle = withAlpha(skin.particle, 0.16);
     c2d.lineWidth = 1;
     c2d.stroke();
   }
@@ -497,13 +500,14 @@ export function createTetris(gameCtx: GameContext): GameController {
     let m = 0;
     if (r > 0 && matrix[r - 1][c]) m |= NB_TOP;
     if (c < matrix[r].length - 1 && matrix[r][c + 1]) m |= NB_RIGHT;
-    if (r < matrix.length - 1 && matrix[r + 1] && matrix[r + 1][c]) m |= NB_BOTTOM;
+    if (r < matrix.length - 1 && matrix[r + 1] && matrix[r + 1][c])
+      m |= NB_BOTTOM;
     if (c > 0 && matrix[r][c - 1]) m |= NB_LEFT;
     return m;
   }
 
   function drawGrid(): void {
-    ctx.strokeStyle = "rgba(255,255,255,0.04)";
+    ctx.strokeStyle = skin.grid;
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let c = 1; c < COLS; c++) {
@@ -523,7 +527,14 @@ export function createTetris(gameCtx: GameContext): GameController {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (board[r][c]) {
-          drawBlock(ctx, c, r, PALETTE[board[r][c]]!, BLOCK, boardNeighbors(r, c));
+          drawBlock(
+            ctx,
+            c,
+            r,
+            skin.entities[board[r][c] - 1],
+            BLOCK,
+            boardNeighbors(r, c),
+          );
         }
       }
     }
@@ -537,7 +548,14 @@ export function createTetris(gameCtx: GameContext): GameController {
     for (let r = 0; r < matrix.length; r++) {
       for (let c = 0; c < matrix[r].length; c++) {
         if (matrix[r][c]) {
-          drawBlock(ctx, x + c, gy + r, PALETTE[current.colorIdx]!, BLOCK, matrixNeighbors(matrix, r, c));
+          drawBlock(
+            ctx,
+            x + c,
+            gy + r,
+            skin.entities[current.colorIdx - 1],
+            BLOCK,
+            matrixNeighbors(matrix, r, c),
+          );
         }
       }
     }
@@ -550,7 +568,14 @@ export function createTetris(gameCtx: GameContext): GameController {
     for (let r = 0; r < matrix.length; r++) {
       for (let c = 0; c < matrix[r].length; c++) {
         if (matrix[r][c]) {
-          drawBlock(ctx, x + c, y + r, PALETTE[colorIdx]!, BLOCK, matrixNeighbors(matrix, r, c));
+          drawBlock(
+            ctx,
+            x + c,
+            y + r,
+            skin.entities[colorIdx - 1],
+            BLOCK,
+            matrixNeighbors(matrix, r, c),
+          );
         }
       }
     }
@@ -562,7 +587,7 @@ export function createTetris(gameCtx: GameContext): GameController {
       const y = r * BLOCK;
       if (p < 0.5) {
         const a = Math.sin((p / 0.5) * Math.PI) * 0.92;
-        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fillStyle = withAlpha(skin.particle, a);
         ctx.fillRect(0, y, BOARD_W, BLOCK);
       } else {
         const q = (p - 0.5) / 0.5;
@@ -571,7 +596,7 @@ export function createTetris(gameCtx: GameContext): GameController {
         const yy = y + (BLOCK - h) / 2;
         ctx.save();
         ctx.globalAlpha = 1 - q;
-        ctx.fillStyle = "rgba(235,248,255,0.9)";
+        ctx.fillStyle = withAlpha(skin.particle, 0.9);
         ctx.fillRect(0, yy, BOARD_W, h);
         ctx.restore();
       }
@@ -580,13 +605,18 @@ export function createTetris(gameCtx: GameContext): GameController {
 
   // ── Side panels ────────────────────────────────────────────
   function panelLabel(text: string, x: number, y: number): void {
-    ctx.fillStyle = "rgba(255,255,255,0.40)";
+    ctx.fillStyle = skin.textFaint;
     ctx.font = "600 11px monospace";
     ctx.textAlign = "left";
     ctx.fillText(text, x, y);
   }
 
-  function panelValue(text: string, x: number, y: number, color = "#e8ecf4"): void {
+  function panelValue(
+    text: string,
+    x: number,
+    y: number,
+    color = skin.text,
+  ): void {
     ctx.fillStyle = color;
     ctx.font = "700 26px monospace";
     ctx.textAlign = "left";
@@ -597,10 +627,14 @@ export function createTetris(gameCtx: GameContext): GameController {
     const x = 28;
     let y = 70;
     const rows: [string, string, string?][] = [
-      ["SCORE", String(score), "#9fd0ff"],
+      ["SCORE", String(score), skin.accent],
       ["LINES", String(lines)],
       ["LEVEL", String(level)],
-      ["COMBO", combo > 1 ? `${combo}×` : "—", combo > 1 ? "#f3b15a" : "#6b7280"],
+      [
+        "COMBO",
+        combo > 1 ? `${combo}×` : "—",
+        combo > 1 ? skin.gold : skin.textFaint,
+      ],
     ];
     for (const [label, value, color] of rows) {
       panelLabel(label, x, y);
@@ -619,10 +653,15 @@ export function createTetris(gameCtx: GameContext): GameController {
     const boxH = 120;
     const boxX = px + (panelW - boxW) / 2;
     const boxY = 86;
-    ctx.fillStyle = "rgba(255,255,255,0.03)";
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.fillStyle = skin.surface;
+    ctx.strokeStyle = skin.border;
     ctx.lineWidth = 1;
-    roundRectPath(ctx, boxX, boxY, boxW, boxH, { tl: 10, tr: 10, br: 10, bl: 10 });
+    roundRectPath(ctx, boxX, boxY, boxW, boxH, {
+      tl: 10,
+      tr: 10,
+      br: 10,
+      bl: 10,
+    });
     ctx.fill();
     ctx.stroke();
 
@@ -650,7 +689,14 @@ export function createTetris(gameCtx: GameContext): GameController {
     for (let r = 0; r < matrix.length; r++) {
       for (let c = 0; c < matrix[r].length; c++) {
         if (matrix[r][c]) {
-          drawBlock(ctx, c, r, PALETTE[colorIdx]!, NEXT_BLOCK, matrixNeighbors(matrix, r, c));
+          drawBlock(
+            ctx,
+            c,
+            r,
+            skin.entities[colorIdx - 1],
+            NEXT_BLOCK,
+            matrixNeighbors(matrix, r, c),
+          );
         }
       }
     }
@@ -660,9 +706,9 @@ export function createTetris(gameCtx: GameContext): GameController {
   function drawCountdown(): void {
     if (countShown == null) return;
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillStyle = skin.overlay;
     ctx.fillRect(0, 0, BOARD_W, BOARD_H);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.text;
     ctx.font = "800 120px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -673,9 +719,9 @@ export function createTetris(gameCtx: GameContext): GameController {
 
   function drawGameOver(): void {
     ctx.save();
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillStyle = skin.overlay;
     ctx.fillRect(0, 0, BOARD_W, BOARD_H);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.text;
     ctx.textAlign = "center";
     ctx.font = "800 36px monospace";
     ctx.fillText("GAME OVER", BOARD_W / 2, BOARD_H / 2);
@@ -684,13 +730,13 @@ export function createTetris(gameCtx: GameContext): GameController {
 
   function draw(): void {
     // Backdrop.
-    ctx.fillStyle = "#0b0d12";
+    ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
 
     // Board well.
-    ctx.fillStyle = "#06070a";
+    ctx.fillStyle = skin.well;
     ctx.fillRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H);
-    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.strokeStyle = skin.border;
     ctx.lineWidth = 1;
     ctx.strokeRect(BOARD_X + 0.5, BOARD_Y + 0.5, BOARD_W - 1, BOARD_H - 1);
 

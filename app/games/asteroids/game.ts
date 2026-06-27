@@ -15,6 +15,15 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
 
+/** Re-emit a `#rrggbb` skin token as an rgba() string at the given alpha. */
+const withAlpha = (hex: string, a: number): string => {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+};
+
 const POWERUP_DROP_CHANCE = 0.15;
 const POWERUP_DURATION = 5;
 const POWERUP_TTL = 12;
@@ -27,6 +36,7 @@ const POINTS = [0, 100, 50, 20];
 export function createAsteroids(gameCtx: GameContext): GameController {
   const canvas = gameCtx.canvas;
   const ctx = canvas.getContext("2d")!;
+  const { skin } = gameCtx;
 
   // ── Input ──────────────────────────────────────────────────────────────────
   const keys: Record<string, boolean> = {};
@@ -74,7 +84,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
     }
 
     draw() {
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = skin.particle;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fill();
@@ -133,7 +143,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rot);
-      ctx.strokeStyle = "#fff";
+      ctx.strokeStyle = skin.entities[this.size];
       ctx.lineWidth = 1.5;
       ctx.lineJoin = "round";
       ctx.beginPath();
@@ -178,12 +188,12 @@ export function createAsteroids(gameCtx: GameContext): GameController {
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(Math.PI / 4);
-      ctx.strokeStyle = "#0ff";
+      ctx.strokeStyle = skin.entities[0];
       ctx.lineWidth = 2;
       const r = this.radius * pulse;
       ctx.strokeRect(-r, -r, r * 2, r * 2);
       ctx.restore();
-      ctx.fillStyle = "#0ff";
+      ctx.fillStyle = skin.entities[0];
       ctx.font = "bold 12px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -282,7 +292,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
-      ctx.strokeStyle = "#fff";
+      ctx.strokeStyle = skin.text;
       ctx.lineWidth = 1.5;
       ctx.lineJoin = "round";
 
@@ -299,7 +309,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
         ctx.moveTo(-8, -4);
         ctx.lineTo(-8 - rand(6, 14), 0);
         ctx.lineTo(-8, 4);
-        ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+        ctx.strokeStyle = withAlpha(skin.flame, 0.85);
         ctx.stroke();
       }
 
@@ -336,7 +346,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
 
     draw() {
       const alpha = this.ttl / this.life;
-      ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+      ctx.strokeStyle = withAlpha(skin.particle, alpha);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
@@ -516,7 +526,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(-Math.PI / 2);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = skin.text;
     ctx.lineWidth = 1.2;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -530,7 +540,7 @@ export function createAsteroids(gameCtx: GameContext): GameController {
   }
 
   function drawHUD() {
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.text;
     ctx.font = "15px monospace";
 
     ctx.textAlign = "left";
@@ -543,23 +553,23 @@ export function createAsteroids(gameCtx: GameContext): GameController {
 
     if (ship.tripleShot > 0) {
       ctx.textAlign = "left";
-      ctx.fillStyle = "#0ff";
+      ctx.fillStyle = skin.entities[0];
       ctx.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
     }
   }
 
   function drawOverlay(title: string, sub: string) {
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.text;
     ctx.font = "bold 46px monospace";
     ctx.fillText(title, W / 2, H / 2 - 18);
     ctx.font = "18px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fillStyle = skin.textMuted;
     ctx.fillText(sub, W / 2, H / 2 + 22);
   }
 
   function draw() {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
 
     particles.forEach((p) => p.draw());
