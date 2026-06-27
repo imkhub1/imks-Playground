@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import type { GameFactory, GameState } from "./types";
+import { DEFAULT_SKIN } from "./skins";
 
 const GAME_W = 800;
 const GAME_H = 600;
@@ -52,6 +53,7 @@ export function useCanvasGame({
       canvas,
       onState: (s) => onState?.(s),
       onGameOver: (score) => onGameOver?.(score),
+      skin: DEFAULT_SKIN,
     });
     controllerRef.current = controller;
     controller.start();
